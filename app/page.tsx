@@ -1,12 +1,12 @@
 "use client"
 
+import MainPage from '@/components/MainPage';
 import React from 'react';
-import MarkdownForm from '@/components/MarkdownForm';
 
-const MarkdownPage: React.FC = () => {
+const App: React.FC = () => {
   return (
-      <MarkdownForm darkMode={false} />
+    <MainPage />
   );
 };
 
-export default MarkdownPage;
+export default App;
