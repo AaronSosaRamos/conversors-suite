@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiClipboard } from 'react-icons/fi';
+import { FiClipboard, FiTrash } from 'react-icons/fi';
 import { FaCode } from 'react-icons/fa';
 import JSONPretty from 'react-json-pretty';
 
@@ -27,6 +27,12 @@ const JsonFormatterForm: React.FC<JsonFormatterFormProps> = ({ darkMode }) => {
     }
   };
 
+  const handleClearContent = () => {
+    setJsonInput('');
+    setFormattedJson(null);
+    setError(null);
+  };
+
   const handleCopyToClipboard = () => {
     if (formattedJson) {
       navigator.clipboard.writeText(JSON.stringify(formattedJson, null, 2));
@@ -52,20 +58,31 @@ const JsonFormatterForm: React.FC<JsonFormatterFormProps> = ({ darkMode }) => {
         rows={6}
         placeholder="Enter your JSON here..."
       />
-      <button
-        onClick={handleFormatJson}
-        className={`w-full md:w-auto mb-4 md:mb-0 px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
-          darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-green-600 text-white hover:bg-green-700'
-        }`}
-      >
-        Format JSON
-      </button>
+      <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-4">
+        <button
+          onClick={handleFormatJson}
+          className={`w-full md:w-auto px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
+            darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          Format JSON
+        </button>
+        <button
+          onClick={handleClearContent}
+          className={`w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
+            darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-red-600 text-white hover:bg-red-700'
+          }`}
+        >
+          <FiTrash className="text-xl md:text-2xl" />
+          Clear
+        </button>
+      </div>
       {error && <div className="text-red-500 mt-4">{error}</div>}
       <div className="mt-6">
         {formattedJson && (
           <>
             <h2 className="text-xl md:text-2xl font-semibold mb-4">Formatted JSON:</h2>
-            <div className={`border p-4 rounded-md shadow-lg ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-green-300'}`}>
+            <div className={`border p-4 rounded-md shadow-lg overflow-auto max-h-64 md:max-h-96 custom-scrollbar ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-green-300'}`}>
               <JSONPretty data={formattedJson} className="text-black"></JSONPretty>
             </div>
             <button

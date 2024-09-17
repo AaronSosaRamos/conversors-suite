@@ -21,7 +21,7 @@ const PDFButton: React.FC<{ htmlOutput: string; darkMode: boolean }> = ({ htmlOu
     <button
       onClick={handleDownloadPDF}
       className={`flex items-center gap-2 px-6 py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
-        darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-red-600 text-white hover:bg-red-700'
+        darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-green-600 text-white hover:bg-green-700'
       }`}
     >
       <FaFilePdf className="text-2xl" />
