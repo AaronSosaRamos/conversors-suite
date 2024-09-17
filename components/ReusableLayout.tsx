@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
                             </span>
                         </Link>
-                        <Link href="/json">
+                        <Link href="/json-formatter">
                             <span className={`cursor-pointer relative group ${darkMode ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
                                 JSON
                                 <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
@@ -73,7 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 Markdown
                             </span>
                         </Link>
-                        <Link href="/json">
+                        <Link href="/json-formatter">
                             <span onClick={toggleMenu} className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
                                 JSON
                             </span>
