@@ -6,7 +6,6 @@ import Select from 'react-select';
 import { FiArrowRightCircle, FiTrash, FiRepeat, FiClipboard } from 'react-icons/fi';
 import { FaLanguage } from 'react-icons/fa';
 
-// Esquema Zod para validar los inputs del formulario
 const translationSchema = z.object({
   text_input: z.string().nonempty('Text input is required.'),
   source_language: z.object({
@@ -47,7 +46,6 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
   });
 
   const onSubmit = (data: FormData) => {
-    // Simulación de la traducción, solo asignamos el texto traducido
     setTranslatedText(data.text_input);
   };
 
@@ -80,7 +78,6 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex justify-between gap-4">
-          {/* Selectores de Idioma con Controller */}
           <div className="w-1/2">
             <label className="block text-sm font-semibold mb-2">Source Language</label>
             <Controller
@@ -98,7 +95,6 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
             />
           </div>
 
-          {/* Botón de Intercambio de Idiomas */}
           <div className="flex items-center justify-center">
             <button type="button" onClick={handleSwapLanguages} className="p-2 border rounded-full transition-transform transform hover:rotate-180">
               <FiRepeat className="text-xl" />
@@ -123,7 +119,6 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
           </div>
         </div>
 
-        {/* Text Area para el texto de entrada */}
         <div>
           <label className="block text-sm font-semibold mb-2">Text to Translate</label>
           <textarea
@@ -136,7 +131,6 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          {/* Botón de Traducción */}
           <button
             type="submit"
             className={`w-full md:w-1/2 px-4 py-3 rounded-md shadow-md transition-transform transform hover:-translate-y-1 ${
@@ -148,7 +142,6 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
             </span>
           </button>
 
-          {/* Botón de Limpiar */}
           <button
             type="button"
             onClick={handleClearContent}
@@ -162,12 +155,10 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
         </div>
       </form>
 
-      {/* Área de Texto Traducido */}
       {translatedText && (
         <div className="mt-6 p-4 border rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold">Translation</h2>
-            {/* Botón de Copiar */}
             <button
               onClick={handleCopyToClipboard}
               className={`px-4 py-2 flex items-center justify-center gap-2 rounded-md shadow-md transition-transform transform hover:-translate-y-1 ${
