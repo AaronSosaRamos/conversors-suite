@@ -6,22 +6,20 @@ import { FiClipboard, FiTrash } from 'react-icons/fi';
 import { FaDatabase } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
 
-// Esquema Zod para validar los inputs del formulario
-const jsonToSQLSchema = z.object({
-  json_input: z.string().nonempty('JSON input is required.'),
+const xmlToSQLSchema = z.object({
+  xml_input: z.string().nonempty('XML input is required.'),
   sql_dbms: z.enum(['MySQL', 'PostgreSQL', 'SQLite', 'SQLServer', 'Oracle', 'MariaDB']),
 });
 
 interface FormData {
-  json_input: string;
+  xml_input: string;
   sql_dbms: string;
 }
 
-interface JsonToSQLFormProps {
+interface XmlToSQLFormProps {
   darkMode: boolean;
 }
 
-// Simula el resultado de la request devolviendo el bloque SQL generado usando `react-markdown`
 const SQLResult = React.lazy(() =>
   new Promise<{ default: React.FC }>((resolve) => {
     setTimeout(() => {
@@ -39,16 +37,16 @@ CREATE TABLE store (
     postal_code VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE employees (
+CREATE TABLE employee (
     id INT AUTO_INCREMENT PRIMARY KEY,
     store_id INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     position VARCHAR(255) NOT NULL,
     years_at_store INT NOT NULL,
-    FOREIGN KEY (store_id) REFERENCES store(id) ON DELETE CASCADE
+    FOREIGN KEY (store_id) REFERENCES store(id)
 );
 
-CREATE TABLE inventory (
+CREATE TABLE item (
     id INT AUTO_INCREMENT PRIMARY KEY,
     store_id INT NOT NULL,
     item_id INT NOT NULL,
@@ -56,8 +54,26 @@ CREATE TABLE inventory (
     category VARCHAR(255) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     stock INT NOT NULL,
-    FOREIGN KEY (store_id) REFERENCES store(id) ON DELETE CASCADE
+    FOREIGN KEY (store_id) REFERENCES store(id)
 );
+
+-- Insert store data
+INSERT INTO store (name, address, city, postal_code) VALUES 
+('Super Tienda', 'Av. Siempre Viva 123', 'Ciudad Central', '12345');
+
+-- Assuming the store has an id of 1 after insertion
+SET @store_id = LAST_INSERT_ID();
+
+-- Insert employee data
+INSERT INTO employee (store_id, name, position, years_at_store) VALUES 
+(@store_id, 'Carlos Gómez', 'Gerente', 5),
+(@store_id, 'Ana Martínez', 'Cajera', 2);
+
+-- Insert item data
+INSERT INTO item (store_id, item_id, item_name, category, price, stock) VALUES 
+(@store_id, 1, 'Café', 'Bebidas', 3.50, 120),
+(@store_id, 2, 'Pan Integral', 'Panadería', 2.00, 60),
+(@store_id, 3, 'Manzana', 'Frutas', 1.00, 200);
 \`\`\`
               `}
             </ReactMarkdown>
@@ -68,11 +84,11 @@ CREATE TABLE inventory (
   })
 );
 
-const JsonToSQLForm: React.FC<JsonToSQLFormProps> = ({ darkMode }) => {
+const XmlToSQLForm: React.FC<XmlToSQLFormProps> = ({ darkMode }) => {
   const [showResult, setShowResult] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(jsonToSQLSchema),
+    resolver: zodResolver(xmlToSQLSchema),
   });
 
   const onSubmit = () => {
@@ -91,28 +107,28 @@ const JsonToSQLForm: React.FC<JsonToSQLFormProps> = ({ darkMode }) => {
   };
 
   return (
-    <div className={`max-w-2xl mx-auto p-4 md:p-6 rounded-lg shadow-lg animate-fade-in-down ${darkMode ? 'bg-gray-800 text-white' : 'bg-gradient-to-r from-yellow-500 to-green-500 text-white'}`}>
+    <div className={`max-w-2xl mx-auto p-4 md:p-6 rounded-lg shadow-lg animate-fade-in-down ${darkMode ? 'bg-gray-800 text-white' : 'bg-gradient-to-r from-blue-500 to-green-500 text-white'}`}>
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
         <h1 className="text-2xl md:text-3xl font-extrabold flex items-center justify-center gap-2 mb-4 md:mb-0">
-          <FaDatabase className="text-3xl md:text-4xl" /> JSON to SQL Converter
+          <FaDatabase className="text-3xl md:text-4xl" /> XML to SQL Converter
         </h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <textarea
-          {...register('json_input')}
+          {...register('xml_input')}
           className={`w-full p-3 md:p-4 mb-4 border rounded-md focus:outline-none focus:ring-2 transition-all ${
-            darkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-gray-500' : 'border-yellow-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-yellow-600'
+            darkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-gray-500' : 'border-blue-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-blue-600'
           }`}
           rows={6}
-          placeholder="Enter your JSON here..."
+          placeholder="Enter your XML here..."
         />
-        {errors.json_input && <p className="text-red-500">{errors.json_input.message}</p>}
+        {errors.xml_input && <p className="text-red-500">{errors.xml_input.message}</p>}
 
         <select
           {...register('sql_dbms')}
           className={`w-full p-3 md:p-4 mb-4 border rounded-md focus:outline-none focus:ring-2 transition-all ${
-            darkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-gray-500' : 'border-yellow-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-yellow-600'
+            darkMode ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-gray-500' : 'border-blue-300 bg-white text-gray-800 placeholder-gray-400 focus:ring-blue-600'
           }`}
         >
           <option value="" disabled>Select your SQL DBMS</option>
@@ -167,4 +183,4 @@ const JsonToSQLForm: React.FC<JsonToSQLFormProps> = ({ darkMode }) => {
   );
 };
 
-export default JsonToSQLForm;
+export default XmlToSQLForm;
