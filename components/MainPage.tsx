@@ -28,7 +28,7 @@ const MainPage: React.FC = () => {
             </div>
           </Link>
 
-          <Link href="/json">
+          <Link href="/json-formatter">
             <div className="group bg-gray-800 p-6 rounded-lg shadow-lg transform transition-transform duration-300 hover:-translate-y-2 hover:bg-gray-700">
               <div className="flex justify-center mb-4">
                 <FaCode className="text-6xl text-green-400 transition-transform duration-300 group-hover:scale-110" />
