@@ -3,32 +3,37 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Select from 'react-select';
-import { FiArrowRightCircle, FiTrash, FiRepeat, FiClipboard } from 'react-icons/fi';
+import { FiArrowRightCircle, FiTrash, FiRepeat, FiClipboard, FiCheckCircle } from 'react-icons/fi';
 import { FaLanguage } from 'react-icons/fa';
+import api from '@/services/api'; 
 
-const TranslatedResult = React.lazy(() =>
-  new Promise<{ default: React.FC }>((resolve) => {
+const TranslatedResult: React.FC<{ translatedText: string }> = ({ translatedText }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(translatedText);
+    setCopied(true);
     setTimeout(() => {
-      resolve({
-        default: () => (
-          <div className="mt-6 p-4 border rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Translation</h2>
-              <button
-                onClick={() => navigator.clipboard.writeText('Translated text')}
-                className="px-4 py-2 flex items-center justify-center gap-2 rounded-md shadow-md transition-transform transform hover:-translate-y-1 bg-blue-600 text-white hover:bg-blue-500"
-              >
-                <FiClipboard className="text-xl" />
-                Copy
-              </button>
-            </div>
-            <p className="mt-2">Translated text</p>
-          </div>
-        ),
-      });
+      setCopied(false);
     }, 2000); 
-  })
-);
+  };
+
+  return (
+    <div className="mt-6 p-4 border rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Translation</h2>
+        <button
+          onClick={handleCopy}
+          className="relative px-4 py-2 flex items-center justify-center gap-2 rounded-md shadow-md transition-transform transform hover:-translate-y-1 bg-blue-600 text-white hover:bg-blue-500"
+        >
+          {copied ? <FiCheckCircle className="text-xl" /> : <FiClipboard className="text-xl" />}
+          <span>{copied ? 'Copied!' : 'Copy'}</span>
+        </button>
+      </div>
+      <p className="mt-2">{translatedText}</p>
+    </div>
+  );
+};
 
 const translationSchema = z.object({
   text_input: z.string().nonempty('Text input is required.'),
@@ -63,19 +68,38 @@ const languageOptions = [
 ];
 
 const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
-  const [showResult, setShowResult] = useState(false);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const { register, handleSubmit, setValue, getValues, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(translationSchema),
   });
 
-  const onSubmit = (data: FormData) => {
-    setShowResult(true);
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setTranslatedText(null);
+
+    try {
+      const requestData = {
+        text_input: data.text_input,
+        source_language: data.source_language.value,
+        target_language: data.target_language.value,
+      };
+
+      const response = await api.post('/translator', requestData); 
+      const translation = response.data.content; 
+      setTranslatedText(translation);
+    } catch (error) {
+      console.error('Error generating translation:', error);
+      alert('Error generating translation. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearContent = () => {
     setValue('text_input', '');
-    setShowResult(false);
+    setTranslatedText(null);
   };
 
   const handleSwapLanguages = () => {
@@ -150,13 +174,16 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <button
             type="submit"
+            disabled={loading}
             className={`w-full md:w-1/2 px-4 py-3 rounded-md shadow-md transition-transform transform hover:-translate-y-1 ${
               darkMode ? 'bg-green-600 text-white hover:bg-green-500' : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
-            <span className="flex items-center justify-center gap-2">
-              Translate <FiArrowRightCircle />
-            </span>
+            {loading ? 'Translating...' : (
+              <span className="flex items-center justify-center gap-2">
+                Translate <FiArrowRightCircle />
+              </span>
+            )}
           </button>
 
           <button
@@ -172,10 +199,8 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
         </div>
       </form>
 
-      {showResult && (
-        <Suspense fallback={<div className="flex justify-center"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>}>
-          <TranslatedResult />
-        </Suspense>
+      {translatedText && (
+        <TranslatedResult translatedText={translatedText} />
       )}
     </div>
   );
