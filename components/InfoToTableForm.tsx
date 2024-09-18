@@ -4,9 +4,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FiClipboard, FiTrash } from 'react-icons/fi';
 import { FaTable } from 'react-icons/fa';
-import api from '@/services/api'; // Asegúrate de tener configurada tu API correctamente
+import api from '@/services/api'; 
 
-// Zod schema para validar los inputs del formulario
 const infoToTableSchema = z.object({
   text_input: z.string().nonempty('Text input is required.'),
   context: z.string().nonempty('Context is required.'),
@@ -21,12 +20,11 @@ interface InfoToTableFormProps {
   darkMode: boolean;
 }
 
-// Función para limpiar el markdown eliminando las filas con guiones
 const cleanTableMarkdown = (markdown: string): string[][] => {
   const rows = markdown.split('\n');
-  const cleanedRows = rows.filter(row => !row.includes('---')); // Elimina las filas con guiones
+  const cleanedRows = rows.filter(row => !row.includes('---')); 
   const table = cleanedRows.map(row => row.split('|').map(cell => cell.trim()));
-  return table.filter(row => row.length > 1); // Filtra filas vacías
+  return table.filter(row => row.length > 1); 
 };
 
 const InfoToTableForm: React.FC<InfoToTableFormProps> = ({ darkMode }) => {
