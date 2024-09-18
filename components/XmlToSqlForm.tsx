@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FiClipboard, FiTrash } from 'react-icons/fi';
 import { FaDatabase } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
+import api from '@/services/api';
 
 const xmlToSQLSchema = z.object({
   xml_input: z.string().nonempty('XML input is required.'),
@@ -20,90 +21,37 @@ interface XmlToSQLFormProps {
   darkMode: boolean;
 }
 
-const SQLResult = React.lazy(() =>
-  new Promise<{ default: React.FC }>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        default: () => (
-          <div className="bg-gray-900 text-white p-4 rounded-md overflow-auto">
-            <ReactMarkdown>
-              {`
-\`\`\`sql
-CREATE TABLE store (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    city VARCHAR(255) NOT NULL,
-    postal_code VARCHAR(20) NOT NULL
-);
-
-CREATE TABLE employee (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    store_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    position VARCHAR(255) NOT NULL,
-    years_at_store INT NOT NULL,
-    FOREIGN KEY (store_id) REFERENCES store(id)
-);
-
-CREATE TABLE item (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    store_id INT NOT NULL,
-    item_id INT NOT NULL,
-    item_name VARCHAR(255) NOT NULL,
-    category VARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    stock INT NOT NULL,
-    FOREIGN KEY (store_id) REFERENCES store(id)
-);
-
--- Insert store data
-INSERT INTO store (name, address, city, postal_code) VALUES 
-('Super Tienda', 'Av. Siempre Viva 123', 'Ciudad Central', '12345');
-
--- Assuming the store has an id of 1 after insertion
-SET @store_id = LAST_INSERT_ID();
-
--- Insert employee data
-INSERT INTO employee (store_id, name, position, years_at_store) VALUES 
-(@store_id, 'Carlos Gómez', 'Gerente', 5),
-(@store_id, 'Ana Martínez', 'Cajera', 2);
-
--- Insert item data
-INSERT INTO item (store_id, item_id, item_name, category, price, stock) VALUES 
-(@store_id, 1, 'Café', 'Bebidas', 3.50, 120),
-(@store_id, 2, 'Pan Integral', 'Panadería', 2.00, 60),
-(@store_id, 3, 'Manzana', 'Frutas', 1.00, 200);
-\`\`\`
-              `}
-            </ReactMarkdown>
-          </div>
-        ),
-      });
-    }, 2000);
-  })
-);
-
 const XmlToSQLForm: React.FC<XmlToSQLFormProps> = ({ darkMode }) => {
-  const [showResult, setShowResult] = useState(false);
-
+  const [sqlResult, setSqlResult] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(xmlToSQLSchema),
   });
 
-  const onSubmit = () => {
-    setShowResult(true);
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setSqlResult(null); 
+    try {
+      const response = await api.post('/xml-to-sql', data); 
+      setSqlResult(response.data.content);
+    } catch (error) {
+      console.error('Error generating SQL:', error);
+      alert('Error generating SQL. Please check your input and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearContent = () => {
     reset();
-    setShowResult(false);
+    setSqlResult(null);
   };
 
   const handleCopyToClipboard = async () => {
-    const sqlOutput = await document.querySelector('pre')?.innerText || '';
-    navigator.clipboard.writeText(sqlOutput);
-    alert('SQL copied to clipboard!');
+    if (sqlResult) {
+      navigator.clipboard.writeText(sqlResult);
+      alert('SQL copied to clipboard!');
+    }
   };
 
   return (
@@ -144,11 +92,12 @@ const XmlToSQLForm: React.FC<XmlToSQLFormProps> = ({ darkMode }) => {
         <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-4">
           <button
             type="submit"
+            disabled={loading}
             className={`w-full md:w-auto px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
               darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
-            Generate SQL
+            {loading ? 'Generating...' : 'Generate SQL'}
           </button>
           <button
             type="button"
@@ -164,9 +113,14 @@ const XmlToSQLForm: React.FC<XmlToSQLFormProps> = ({ darkMode }) => {
       </form>
 
       <div className="mt-6">
-        {showResult && (
-          <Suspense fallback={<div className="flex justify-center"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>}>
-            <SQLResult />
+        {loading && (
+          <div className="flex justify-center">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+          </div>
+        )}
+        {sqlResult && (
+          <div className="bg-gray-900 text-white p-4 rounded-md overflow-auto">
+            <ReactMarkdown>{`\`\`\`sql\n${sqlResult}\n\`\`\``}</ReactMarkdown>
             <button
               onClick={handleCopyToClipboard}
               className={`flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-3 mt-4 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
@@ -176,7 +130,7 @@ const XmlToSQLForm: React.FC<XmlToSQLFormProps> = ({ darkMode }) => {
               <FiClipboard className="text-xl md:text-2xl" />
               Copy SQL to Clipboard
             </button>
-          </Suspense>
+          </div>
         )}
       </div>
     </div>
