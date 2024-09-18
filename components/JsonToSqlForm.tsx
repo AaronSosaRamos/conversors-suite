@@ -5,8 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FiClipboard, FiTrash } from 'react-icons/fi';
 import { FaDatabase } from 'react-icons/fa';
 import ReactMarkdown from 'react-markdown';
+import api from '@/services/api';
 
-// Esquema Zod para validar los inputs del formulario
 const jsonToSQLSchema = z.object({
   json_input: z.string().nonempty('JSON input is required.'),
   sql_dbms: z.enum(['MySQL', 'PostgreSQL', 'SQLite', 'SQLServer', 'Oracle', 'MariaDB']),
@@ -21,73 +21,37 @@ interface JsonToSQLFormProps {
   darkMode: boolean;
 }
 
-// Simula el resultado de la request devolviendo el bloque SQL generado usando `react-markdown`
-const SQLResult = React.lazy(() =>
-  new Promise<{ default: React.FC }>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        default: () => (
-          <div className="bg-gray-900 text-white p-4 rounded-md overflow-auto">
-            <ReactMarkdown>
-              {`
-\`\`\`sql
-CREATE TABLE store (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    city VARCHAR(255) NOT NULL,
-    postal_code VARCHAR(20) NOT NULL
-);
-
-CREATE TABLE employees (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    store_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    position VARCHAR(255) NOT NULL,
-    years_at_store INT NOT NULL,
-    FOREIGN KEY (store_id) REFERENCES store(id) ON DELETE CASCADE
-);
-
-CREATE TABLE inventory (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    store_id INT NOT NULL,
-    item_id INT NOT NULL,
-    item_name VARCHAR(255) NOT NULL,
-    category VARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    stock INT NOT NULL,
-    FOREIGN KEY (store_id) REFERENCES store(id) ON DELETE CASCADE
-);
-\`\`\`
-              `}
-            </ReactMarkdown>
-          </div>
-        ),
-      });
-    }, 2000);
-  })
-);
-
 const JsonToSQLForm: React.FC<JsonToSQLFormProps> = ({ darkMode }) => {
-  const [showResult, setShowResult] = useState(false);
-
+  const [sqlResult, setSqlResult] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(jsonToSQLSchema),
   });
 
-  const onSubmit = () => {
-    setShowResult(true);
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setSqlResult(null); 
+    try {
+      const response = await api.post('/json-to-sql', data);
+      setSqlResult(response.data.content);
+    } catch (error) {
+      console.error('Error generating SQL:', error);
+      alert('Error generating SQL. Please check your input and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearContent = () => {
     reset();
-    setShowResult(false);
+    setSqlResult(null);
   };
 
   const handleCopyToClipboard = async () => {
-    const sqlOutput = await document.querySelector('pre')?.innerText || '';
-    navigator.clipboard.writeText(sqlOutput);
-    alert('SQL copied to clipboard!');
+    if (sqlResult) {
+      navigator.clipboard.writeText(sqlResult);
+      alert('SQL copied to clipboard!');
+    }
   };
 
   return (
@@ -128,11 +92,12 @@ const JsonToSQLForm: React.FC<JsonToSQLFormProps> = ({ darkMode }) => {
         <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-4">
           <button
             type="submit"
+            disabled={loading}
             className={`w-full md:w-auto px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
               darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
-            Generate SQL
+            {loading ? 'Generating...' : 'Generate SQL'}
           </button>
           <button
             type="button"
@@ -148,9 +113,14 @@ const JsonToSQLForm: React.FC<JsonToSQLFormProps> = ({ darkMode }) => {
       </form>
 
       <div className="mt-6">
-        {showResult && (
-          <Suspense fallback={<div className="flex justify-center"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>}>
-            <SQLResult />
+        {loading && (
+          <div className="flex justify-center">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+          </div>
+        )}
+        {sqlResult && (
+          <div className="bg-gray-900 text-white p-4 rounded-md overflow-auto">
+            <ReactMarkdown>{`\`\`\`sql\n${sqlResult}\n\`\`\``}</ReactMarkdown>
             <button
               onClick={handleCopyToClipboard}
               className={`flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-3 mt-4 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
@@ -160,7 +130,7 @@ const JsonToSQLForm: React.FC<JsonToSQLFormProps> = ({ darkMode }) => {
               <FiClipboard className="text-xl md:text-2xl" />
               Copy SQL to Clipboard
             </button>
-          </Suspense>
+          </div>
         )}
       </div>
     </div>
