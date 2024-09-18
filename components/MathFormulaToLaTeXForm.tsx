@@ -6,8 +6,8 @@ import { FiClipboard, FiTrash } from 'react-icons/fi';
 import { FaCalculator } from 'react-icons/fa';
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
+import api from '@/services/api';
 
-// Esquema Zod para validar los inputs del formulario
 const mathToLatexSchema = z.object({
   formula_input: z.string().nonempty('Mathematical formula is required.'),
 });
@@ -20,43 +20,44 @@ interface MathToLatexFormProps {
   darkMode: boolean;
 }
 
-// Simula el resultado de la request devolviendo la fórmula LaTeX
-const LaTeXResult = React.lazy(() =>
-  new Promise<{ default: React.FC }>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        default: () => (
-          <div className="bg-gray-900 text-white p-4 rounded-md overflow-auto">
-            <BlockMath>
-              {String.raw` \int_{0}^{1} x^{2} \, dx `}
-            </BlockMath>
-          </div>
-        ),
-      });
-    }, 2000);
-  })
-);
-
 const MathToLatexForm: React.FC<MathToLatexFormProps> = ({ darkMode }) => {
-  const [showResult, setShowResult] = useState(false);
-
+  const [latexResult, setLatexResult] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(mathToLatexSchema),
   });
 
-  const onSubmit = () => {
-    setShowResult(true);
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setLatexResult(null);  
+
+    try {
+      const response = await api.post('/math-formulas-in-latex', data);  
+      const processedLatex = response.data.content
+        .replace(/^```latex/, '')   
+        .replace(/```$/, '')        
+        .replace(/^\[|\]$/g, '')    
+        .trim();                    
+      setLatexResult(processedLatex);  
+    } catch (error) {
+      console.error('Error generating LaTeX:', error);
+      alert('Error generating LaTeX. Please check your input and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearContent = () => {
     reset();
-    setShowResult(false);
+    setLatexResult(null);
   };
 
   const handleCopyToClipboard = async () => {
-    const latexOutput = document.querySelector('.katex')?.textContent || '';
-    navigator.clipboard.writeText(latexOutput);
-    alert('LaTeX copied to clipboard!');
+    if (latexResult) {
+      navigator.clipboard.writeText(latexResult);
+      alert('LaTeX copied to clipboard!');
+    }
   };
 
   return (
@@ -81,11 +82,12 @@ const MathToLatexForm: React.FC<MathToLatexFormProps> = ({ darkMode }) => {
         <div className="flex flex-col md:flex-row justify-center items-center gap-4 mb-4">
           <button
             type="submit"
+            disabled={loading}
             className={`w-full md:w-auto px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
               darkMode ? 'bg-gray-600 text-white hover:bg-gray-500' : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
-            Convert to LaTeX
+            {loading ? 'Converting...' : 'Convert to LaTeX'}
           </button>
           <button
             type="button"
@@ -101,9 +103,14 @@ const MathToLatexForm: React.FC<MathToLatexFormProps> = ({ darkMode }) => {
       </form>
 
       <div className="mt-6">
-        {showResult && (
-          <Suspense fallback={<div className="flex justify-center"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>}>
-            <LaTeXResult />
+        {loading && (
+          <div className="flex justify-center">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+          </div>
+        )}
+        {latexResult && (
+          <div className="bg-gray-900 text-white p-4 rounded-md overflow-auto">
+            <BlockMath>{latexResult}</BlockMath>
             <button
               onClick={handleCopyToClipboard}
               className={`flex items-center justify-center gap-2 px-4 py-2 md:px-6 md:py-3 mt-4 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
@@ -113,7 +120,7 @@ const MathToLatexForm: React.FC<MathToLatexFormProps> = ({ darkMode }) => {
               <FiClipboard className="text-xl md:text-2xl" />
               Copy LaTeX to Clipboard
             </button>
-          </Suspense>
+          </div>
         )}
       </div>
     </div>
