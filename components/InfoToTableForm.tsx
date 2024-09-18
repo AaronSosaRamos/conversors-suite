@@ -4,56 +4,9 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FiClipboard, FiTrash } from 'react-icons/fi';
 import { FaTable } from 'react-icons/fa';
+import api from '@/services/api'; // Asegúrate de tener configurada tu API correctamente
 
-const TableResult = React.lazy(() =>
-  new Promise<{ default: React.FC }>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        default: () => (
-          <div className="overflow-x-auto mt-8"> 
-            <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-700">
-              <thead className="bg-gray-200 dark:bg-gray-700">
-                <tr>
-                  <th className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">Type of Language Model</th>
-                  <th className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">Description</th>
-                  <th className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">Key Features</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800">
-                <tr>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">Rule-based Models</td>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">
-                    Rely on manually crafted rules for text generation
-                  </td>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">
-                    Manual rules, deterministic output
-                  </td>
-                </tr>
-                <tr>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">Statistical Models</td>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">
-                    Use probabilities to predict the next word
-                  </td>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">Probabilistic predictions</td>
-                </tr>
-                <tr>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">Neural Network-based Models</td>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">
-                    Learn from large datasets to generate human-like text
-                  </td>
-                  <td className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">
-                    Advanced learning, generative capability
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        ),
-      });
-    }, 2000); 
-  })
-);
-
+// Zod schema para validar los inputs del formulario
 const infoToTableSchema = z.object({
   text_input: z.string().nonempty('Text input is required.'),
   context: z.string().nonempty('Context is required.'),
@@ -68,32 +21,49 @@ interface InfoToTableFormProps {
   darkMode: boolean;
 }
 
+// Función para limpiar el markdown eliminando las filas con guiones
+const cleanTableMarkdown = (markdown: string): string[][] => {
+  const rows = markdown.split('\n');
+  const cleanedRows = rows.filter(row => !row.includes('---')); // Elimina las filas con guiones
+  const table = cleanedRows.map(row => row.split('|').map(cell => cell.trim()));
+  return table.filter(row => row.length > 1); // Filtra filas vacías
+};
+
 const InfoToTableForm: React.FC<InfoToTableFormProps> = ({ darkMode }) => {
-  const [showTable, setShowTable] = useState(false);
+  const [tableData, setTableData] = useState<string[][] | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(infoToTableSchema),
   });
 
-  const onSubmit = () => {
-    setShowTable(true); 
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setTableData(null);
+
+    try {
+      const response = await api.post('/text-to-conceptual-table', data);
+      const table = cleanTableMarkdown(response.data.content);
+      setTableData(table);
+    } catch (error) {
+      console.error('Error generating table:', error);
+      alert('Error generating table. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearContent = () => {
     reset();
-    setShowTable(false); 
+    setTableData(null);
   };
 
-  const handleCopyToClipboard = async () => {
-    const tableMarkdown = `
-| Type of Language Model        | Description                                                  | Key Features                       |
-|-------------------------------|--------------------------------------------------------------|------------------------------------|
-| Rule-based Models             | Rely on manually crafted rules for text generation           | Manual rules, deterministic output |
-| Statistical Models            | Use probabilities to predict the next word                   | Probabilistic predictions          |
-| Neural Network-based Models   | Learn from large datasets to generate human-like text        | Advanced learning, generative capability |
-    `;
-    navigator.clipboard.writeText(tableMarkdown);
-    alert('Table copied to clipboard!');
+  const handleCopyToClipboard = () => {
+    if (tableData) {
+      const tableMarkdown = tableData.map(row => row.join(' | ')).join('\n');
+      navigator.clipboard.writeText(tableMarkdown);
+      alert('Table copied to clipboard!');
+    }
   };
 
   return (
@@ -130,11 +100,12 @@ const InfoToTableForm: React.FC<InfoToTableFormProps> = ({ darkMode }) => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <button
             type="submit"
+            disabled={loading}
             className={`w-full md:w-1/2 px-6 py-3 rounded-lg shadow-md transition-transform transform hover:-translate-y-1 ${
               darkMode ? 'bg-green-600 text-white hover:bg-green-500' : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
-            Generate Table
+            {loading ? 'Generating...' : 'Generate Table'}
           </button>
 
           <button
@@ -150,9 +121,36 @@ const InfoToTableForm: React.FC<InfoToTableFormProps> = ({ darkMode }) => {
         </div>
       </form>
 
-      {showTable && (
-        <Suspense fallback={<div className="flex justify-center"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>}>
-          <TableResult />
+      {loading && (
+        <div className="flex justify-center mt-6">
+          <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+        </div>
+      )}
+
+      {tableData && (
+        <div className="overflow-x-auto mt-8">
+          <table className="min-w-full table-auto border-collapse border border-gray-300 dark:border-gray-700">
+            <thead className="bg-gray-200 dark:bg-gray-700">
+              <tr>
+                {tableData[0].map((header, idx) => (
+                  <th key={idx} className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800">
+              {tableData.slice(1).map((row, idx) => (
+                <tr key={idx}>
+                  {row.map((cell, cellIdx) => (
+                    <td key={cellIdx} className="border border-gray-300 dark:border-gray-700 px-4 py-2 text-black dark:text-white">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
           <div className="flex justify-center mt-4">
             <button
               onClick={handleCopyToClipboard}
@@ -164,7 +162,7 @@ const InfoToTableForm: React.FC<InfoToTableFormProps> = ({ darkMode }) => {
               Copy Table
             </button>
           </div>
-        </Suspense>
+        </div>
       )}
     </div>
   );
