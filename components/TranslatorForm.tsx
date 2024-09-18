@@ -1,10 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Select from 'react-select';
 import { FiArrowRightCircle, FiTrash, FiRepeat, FiClipboard } from 'react-icons/fi';
 import { FaLanguage } from 'react-icons/fa';
+
+const TranslatedResult = React.lazy(() =>
+  new Promise<{ default: React.FC }>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        default: () => (
+          <div className="mt-6 p-4 border rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Translation</h2>
+              <button
+                onClick={() => navigator.clipboard.writeText('Translated text')}
+                className="px-4 py-2 flex items-center justify-center gap-2 rounded-md shadow-md transition-transform transform hover:-translate-y-1 bg-blue-600 text-white hover:bg-blue-500"
+              >
+                <FiClipboard className="text-xl" />
+                Copy
+              </button>
+            </div>
+            <p className="mt-2">Translated text</p>
+          </div>
+        ),
+      });
+    }, 2000); 
+  })
+);
 
 const translationSchema = z.object({
   text_input: z.string().nonempty('Text input is required.'),
@@ -39,19 +63,19 @@ const languageOptions = [
 ];
 
 const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
-  const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
   const { register, handleSubmit, setValue, getValues, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(translationSchema),
   });
 
   const onSubmit = (data: FormData) => {
-    setTranslatedText(data.text_input);
+    setShowResult(true);
   };
 
   const handleClearContent = () => {
     setValue('text_input', '');
-    setTranslatedText(null);
+    setShowResult(false);
   };
 
   const handleSwapLanguages = () => {
@@ -59,13 +83,6 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
     const currentTarget = getValues('target_language');
     setValue('source_language', currentTarget);
     setValue('target_language', currentSource);
-  };
-
-  const handleCopyToClipboard = () => {
-    if (translatedText) {
-      navigator.clipboard.writeText(translatedText);
-      alert('Translation copied to clipboard!');
-    }
   };
 
   return (
@@ -155,22 +172,10 @@ const TranslationForm: React.FC<TranslationFormProps> = ({ darkMode }) => {
         </div>
       </form>
 
-      {translatedText && (
-        <div className="mt-6 p-4 border rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold">Translation</h2>
-            <button
-              onClick={handleCopyToClipboard}
-              className={`px-4 py-2 flex items-center justify-center gap-2 rounded-md shadow-md transition-transform transform hover:-translate-y-1 ${
-                darkMode ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              <FiClipboard className="text-xl" />
-              Copy
-            </button>
-          </div>
-          <p className="mt-2">{translatedText}</p>
-        </div>
+      {showResult && (
+        <Suspense fallback={<div className="flex justify-center"><div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>}>
+          <TranslatedResult />
+        </Suspense>
       )}
     </div>
   );
