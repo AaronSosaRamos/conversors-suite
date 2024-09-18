@@ -21,6 +21,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         setIsMenuOpen(!isMenuOpen);
     };
 
+    const closeMenu = () => {
+        setIsMenuOpen(false);
+    };
+
     return (
         <div className={darkMode ? 'dark' : 'light'}>
             <div className={`min-h-screen flex flex-col justify-between ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} transition-all`}>
@@ -45,6 +49,43 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
                             </span>
                         </Link>
+                        {/* Enlaces directos para AI Services */}
+                        <Link href="/json-to-sql">
+                            <span className={`cursor-pointer relative group ${darkMode ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
+                                Json to SQL
+                                <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
+                            </span>
+                        </Link>
+                        <Link href="/xml-to-sql">
+                            <span className={`cursor-pointer relative group ${darkMode ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
+                                XML to SQL
+                                <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
+                            </span>
+                        </Link>
+                        <Link href="/math-to-latex">
+                            <span className={`cursor-pointer relative group ${darkMode ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
+                                Math to LaTeX
+                                <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
+                            </span>
+                        </Link>
+                        <Link href="/translator">
+                            <span className={`cursor-pointer relative group ${darkMode ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
+                                Translator
+                                <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
+                            </span>
+                        </Link>
+                        <Link href="/info-to-table">
+                            <span className={`cursor-pointer relative group ${darkMode ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
+                                Info to Table
+                                <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
+                            </span>
+                        </Link>
+                        <Link href="/image-transcription">
+                            <span className={`cursor-pointer relative group ${darkMode ? 'text-white' : 'text-gray-900'} transition-all duration-300`}>
+                                Image Transcription
+                                <span className="absolute left-0 bottom-0 w-0 h-1 bg-blue-500 transition-all duration-300 ease-in-out group-hover:w-full"></span>
+                            </span>
+                        </Link>
                     </nav>
                     <div className="flex items-center gap-4">
                         <button
@@ -63,19 +104,50 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </header>
                 {isMenuOpen && (
                     <nav className="md:hidden flex flex-col items-center gap-4 p-6 bg-gray-200 dark:bg-gray-800">
-                        <Link href="/">
-                            <span onClick={toggleMenu} className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                        <Link href="/" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
                                 Home
                             </span>
                         </Link>
-                        <Link href="/markdown">
-                            <span onClick={toggleMenu} className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                        <Link href="/markdown" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
                                 Markdown
                             </span>
                         </Link>
-                        <Link href="/json-formatter">
-                            <span onClick={toggleMenu} className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                        <Link href="/json-formatter" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
                                 JSON
+                            </span>
+                        </Link>
+                        {/* Lista de enlaces para AI Services en el menú móvil */}
+                        <Link href="/json-to-sql" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                                Json to SQL
+                            </span>
+                        </Link>
+                        <Link href="/xml-to-sql" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                                XML to SQL
+                            </span>
+                        </Link>
+                        <Link href="/math-to-latex" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                                Math to LaTeX
+                            </span>
+                        </Link>
+                        <Link href="/translator" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                                Translator
+                            </span>
+                        </Link>
+                        <Link href="/info-to-table" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                                Info to Table
+                            </span>
+                        </Link>
+                        <Link href="/image-transcription" onClick={closeMenu}>
+                            <span className="cursor-pointer text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-400 transition-all duration-300">
+                                Image Transcription
                             </span>
                         </Link>
                     </nav>
